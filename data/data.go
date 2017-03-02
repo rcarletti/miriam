@@ -16,8 +16,8 @@ import (
 
 // getClient uses a Context and Config to retrieve a Token
 // then generate a Client. It returns the generated Client.
-func GetClient(ctx context.Context, config *oauth2.Config) *http.Client {
-	cacheFile, err := tokenCacheFile()
+func GetClient(ctx context.Context, config *oauth2.Config, clientID string) *http.Client {
+	cacheFile, err := tokenCacheFile(clientID)
 	if err != nil {
 		log.Fatalf("Unable to get path to cached credential file. %v", err)
 	}
@@ -50,7 +50,7 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 
 // tokenCacheFile generates credential file path/filename.
 // It returns the generated credential path/filename.
-func tokenCacheFile() (string, error) {
+func tokenCacheFile(clientID string) (string, error) {
 	usr, err := user.Current()
 	if err != nil {
 		return "", err
@@ -58,7 +58,7 @@ func tokenCacheFile() (string, error) {
 	tokenCacheDir := filepath.Join(usr.HomeDir, ".credentials")
 	os.MkdirAll(tokenCacheDir, 0700)
 	return filepath.Join(tokenCacheDir,
-		url.QueryEscape("gmail-go-quickstart.json")), err
+		url.QueryEscape(clientID+".json")), err
 }
 
 // tokenFromFile retrieves a Token from a given file path.

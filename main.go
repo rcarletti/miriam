@@ -42,12 +42,13 @@ func setMidnight(t time.Time) time.Time {
 }
 
 func main() {
+
 	var c clientInfo
 
 	os.Setenv("OWM_API_KEY", "5bf842837d6a00751104eb08c3ace476")
 	ctx := context.Background()
 
-	b, err := ioutil.ReadFile(os.Args[1]) //read client's secret
+	b, err := ioutil.ReadFile("client_secret.json") //read client's secret
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -58,7 +59,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	client := data.GetClient(ctx, config)
+	client := data.GetClient(ctx, config, os.Args[1])
 
 	user := "me"
 
@@ -72,6 +73,9 @@ func main() {
 	}
 
 	r, err := srvGmail.Users.Messages.List(user).Q("is:unread").Do()
+	if err != nil {
+		panic(err)
+	}
 	toBeRead := r.ResultSizeEstimate //unread emails
 	c.MailNum = toBeRead
 
@@ -81,10 +85,10 @@ func main() {
 		//find senders and emails
 		for _, h := range m.Payload.Headers {
 			if h.Name == "From" {
-				var s sender
-				s.Name = h.Value[:strings.LastIndex(h.Value, "<")-1]
-				s.Email = h.Value[strings.LastIndex(h.Value, "<"):]
-				c.Senders = append(c.Senders, s)
+				c.Senders = append(c.Senders, sender{
+					Name:  h.Value[:strings.LastIndex(h.Value, "<")-1],
+					Email: h.Value[strings.LastIndex(h.Value, "<")+1 : len(h.Value)-1],
+				})
 			}
 		}
 	}
@@ -117,11 +121,11 @@ func main() {
 			} else {
 				when = i.Start.Date
 			}
-			var e event
-			e.Name = i.Summary
-			e.Time = when
 
-			c.Events = append(c.Events, e)
+			c.Events = append(c.Events, event{
+				Name: i.Summary,
+				Time: when,
+			})
 
 		}
 	} else {
