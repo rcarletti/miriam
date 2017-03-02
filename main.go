@@ -9,6 +9,7 @@ import (
 	"time"
 
 	owm "github.com/briandowns/openweathermap"
+	"github.com/rcarletti/miriam/data"
 
 	"encoding/json"
 
@@ -18,21 +19,26 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
-func bod(t time.Time) time.Time {
-	year, month, day := t.Date()
-	return time.Date(year, month, day, 23, 59, 0, 0, t.Location())
+type event struct {
+	Name string
+	Time string
 }
 
-type event struct {
-	name string
-	time string
+type sender struct {
+	Name  string
+	Email string
 }
 
 type clientInfo struct {
-	weather string
-	mailNum int64
-	senders []string
-	events  []event
+	Weather string
+	MailNum int64
+	Senders []sender
+	Events  []event
+}
+
+func bod(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, 23, 59, 0, 0, t.Location())
 }
 
 func main() {
@@ -52,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	client := Data.GetClient(ctx, config)
+	client := data.GetClient(ctx, config)
 
 	//*****************************************************************
 	//PARTE DELLE MAIL
@@ -68,7 +74,7 @@ func main() {
 	r, err := srvGmail.Users.Messages.List(user).Q("is:unread").Do()
 	toBeRead := r.ResultSizeEstimate
 
-	c.mailNum = toBeRead
+	c.MailNum = toBeRead
 
 	fmt.Println("numero di mail da leggere:", toBeRead)
 
@@ -79,12 +85,14 @@ func main() {
 		for _, h := range m.Payload.Headers {
 			if h.Name == "From" {
 				//stampo solo il nome del mittente
-				c.senders = append(c.senders, h.Value[:strings.LastIndex(h.Value, "<")-1])
+				var s sender
+				s.Name = h.Value[:strings.LastIndex(h.Value, "<")-1]
+				s.Email = h.Value[strings.LastIndex(h.Value, "<"):])
+				c.Senders = append(c.Senders, s)
 			}
 		}
 	}
 
-	fmt.Println("*****************************************")
 
 	//*****************************************************************
 	//PARTE DEL CALENDARIO
@@ -123,12 +131,10 @@ func main() {
 				when = i.Start.Date
 			}
 			var e event
-			e.name = i.Summary
-			e.time = when
+			e.Name = i.Summary
+			e.Time = when
 
-			c.events = append(c.events, e)
-
-			//fmt.Println(i.Summary, "ore", when[11:13], ":", when[14:16])
+			c.Events = append(c.Events, e)
 
 		}
 	} else {
@@ -141,10 +147,13 @@ func main() {
 	}
 
 	w.CurrentByName("Pisa")
-	c.weather = w.Weather[0].Description
-	//fmt.Println(w.Weather[0])
-	fo, err := os.Create("output.txt")
+	c.Weather = w.Weather[0].Description
 
-	json.NewEncoder(fo).Encode(c)
+	//trasformo la struttura in json
+	fout, err := os.OpenFile("output.json", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+
+	enc := json.NewEncoder(fout).Encode(c)
+
+	fout.Close()
 
 }
