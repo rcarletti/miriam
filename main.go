@@ -47,7 +47,7 @@ func main() {
 	os.Setenv("OWM_API_KEY", "5bf842837d6a00751104eb08c3ace476")
 	ctx := context.Background()
 
-	b, err := ioutil.ReadFile("client_secret.json")
+	b, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -87,12 +87,11 @@ func main() {
 				//stampo solo il nome del mittente
 				var s sender
 				s.Name = h.Value[:strings.LastIndex(h.Value, "<")-1]
-				s.Email = h.Value[strings.LastIndex(h.Value, "<"):])
+				s.Email = h.Value[strings.LastIndex(h.Value, "<"):]
 				c.Senders = append(c.Senders, s)
 			}
 		}
 	}
-
 
 	//*****************************************************************
 	//PARTE DEL CALENDARIO
@@ -145,14 +144,13 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	w.CurrentByName("Pisa")
 	c.Weather = w.Weather[0].Description
 
 	//trasformo la struttura in json
 	fout, err := os.OpenFile("output.json", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 
-	enc := json.NewEncoder(fout).Encode(c)
+	json.NewEncoder(fout).Encode(c)
 
 	fout.Close()
 
