@@ -20,23 +20,23 @@ import (
 )
 
 type event struct {
-	Name string
-	Time string
+	Name string `json:"name"`
+	Time string `json:"time"`
 }
 
 type sender struct {
-	Name  string
-	Email string
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type clientInfo struct {
-	Weather string
-	MailNum int64
-	Senders []sender
-	Events  []event
+	Weather string   `json:"weather"`
+	MailNum int64    `json:"mail_num"`
+	Senders []sender `json:"senders"`
+	Events  []event  `json:"events"`
 }
 
-func bod(t time.Time) time.Time {
+func setMidnight(t time.Time) time.Time {
 	year, month, day := t.Date()
 	return time.Date(year, month, day, 23, 59, 0, 0, t.Location())
 }
@@ -47,7 +47,7 @@ func main() {
 	os.Setenv("OWM_API_KEY", "5bf842837d6a00751104eb08c3ace476")
 	ctx := context.Background()
 
-	b, err := ioutil.ReadFile(os.Args[1])
+	b, err := ioutil.ReadFile(os.Args[1]) //read client's secret
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -60,8 +60,10 @@ func main() {
 	}
 	client := data.GetClient(ctx, config)
 
+	user := "me"
+
 	//*****************************************************************
-	//PARTE DELLE MAIL
+	//gmail
 	//*****************************************************************
 
 	srvGmail, err := gmail.New(client)
@@ -69,22 +71,16 @@ func main() {
 		log.Fatalf("Unable to retrieve gmail Client %v", err)
 	}
 
-	user := "me"
-
 	r, err := srvGmail.Users.Messages.List(user).Q("is:unread").Do()
-	toBeRead := r.ResultSizeEstimate
-
+	toBeRead := r.ResultSizeEstimate //unread emails
 	c.MailNum = toBeRead
-
-	fmt.Println("numero di mail da leggere:", toBeRead)
 
 	for i := 0; i < int(toBeRead); i++ {
 		msg := r.Messages[i].Id
 		m, _ := srvGmail.Users.Messages.Get(user, msg).Do()
-		//cerco il mittente
+		//find senders and emails
 		for _, h := range m.Payload.Headers {
 			if h.Name == "From" {
-				//stampo solo il nome del mittente
 				var s sender
 				s.Name = h.Value[:strings.LastIndex(h.Value, "<")-1]
 				s.Email = h.Value[strings.LastIndex(h.Value, "<"):]
@@ -94,7 +90,7 @@ func main() {
 	}
 
 	//*****************************************************************
-	//PARTE DEL CALENDARIO
+	//calendar
 	//*****************************************************************
 
 	srvCalendar, err := calendar.New(client)
@@ -102,23 +98,15 @@ func main() {
 		log.Fatalf("Unable to retrieve calendar Client %v", err)
 	}
 
-	//creo un orario con data odierna e ora 23:59
-	tonight := bod(time.Now()).Format(time.RFC3339)
+	tonight := setMidnight(time.Now()).Format(time.RFC3339)
 	now := time.Now().Format(time.RFC3339)
 
-	println(now)
-
-	//ricavo gli eventi della giornata
-
 	events, err := srvCalendar.Events.List("primary").ShowDeleted(false).
-		SingleEvents(true).TimeMin(now).TimeMax(tonight).Do()
+		SingleEvents(true).TimeMin(now).TimeMax(tonight).Do() //today events
 	if err != nil {
 		log.Fatalf("Unable to retrieve user's events. %v", err)
 	}
 
-	//stampo gli eventi
-
-	fmt.Println("Eventi in calendario:")
 	if len(events.Items) > 0 {
 		for _, i := range events.Items {
 			var when string
@@ -140,6 +128,10 @@ func main() {
 		fmt.Printf("No upcoming events found.\n")
 	}
 
+	//*****************************************************************
+	//weather
+	//*****************************************************************
+
 	w, err := owm.NewCurrent("C", "it")
 	if err != nil {
 		log.Fatalln(err)
@@ -147,11 +139,12 @@ func main() {
 	w.CurrentByName("Pisa")
 	c.Weather = w.Weather[0].Description
 
-	//trasformo la struttura in json
+	//*****************************************************************
+	//json
+	//*****************************************************************
+
 	fout, err := os.OpenFile("output.json", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-
 	json.NewEncoder(fout).Encode(c)
-
 	fout.Close()
 
 }
