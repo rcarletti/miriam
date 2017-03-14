@@ -24,16 +24,19 @@ type event struct {
 	Time string `json:"time"`
 }
 
-type sender struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+type email struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Subject string `json:"subject"`
 }
 
 type clientInfo struct {
-	Weather string   `json:"weather"`
-	MailNum int64    `json:"mail_num"`
-	Senders []sender `json:"senders"`
-	Events  []event  `json:"events"`
+	Weather     string  `json:"weather"`
+	Temperature float64 `json:"temperature"`
+	Unread      int64   `json:"unread"`
+	EmailList   []email `json:"email_list"`
+	Events      []event `json:"events"`
+	UserID      string  `json:"user_id"`
 }
 
 func setMidnight(t time.Time) time.Time {
@@ -77,20 +80,27 @@ func main() {
 		panic(err)
 	}
 	toBeRead := r.ResultSizeEstimate //unread emails
-	c.MailNum = toBeRead
+	c.Unread = toBeRead
 
 	for i := 0; i < int(toBeRead); i++ {
 		msg := r.Messages[i].Id
 		m, _ := srvGmail.Users.Messages.Get(user, msg).Do()
-		//find senders and emails
+		var name, mail, subject string
+		//find senders, emails and subjects
 		for _, h := range m.Payload.Headers {
 			if h.Name == "From" {
-				c.Senders = append(c.Senders, sender{
-					Name:  h.Value[:strings.LastIndex(h.Value, "<")-1],
-					Email: h.Value[strings.LastIndex(h.Value, "<")+1 : len(h.Value)-1],
-				})
+				name = h.Value[:strings.LastIndex(h.Value, "<")-1]
+				mail = h.Value[strings.LastIndex(h.Value, "<")+1 : len(h.Value)-1]
+			}
+			if h.Name == "Subject" {
+				subject = h.Value
 			}
 		}
+		c.EmailList = append(c.EmailList, email{
+			Name:    name,
+			Email:   mail,
+			Subject: subject,
+		})
 	}
 
 	//*****************************************************************
@@ -140,8 +150,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	w.CurrentByName("Pisa")
+	w.CurrentByName("pisa")
 	c.Weather = w.Weather[0].Description
+	c.Temperature = w.Main.Temp
 
 	//*****************************************************************
 	//json
