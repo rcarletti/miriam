@@ -8,6 +8,8 @@ import (
 	gcal "google.golang.org/api/calendar/v3"
 	gmail "google.golang.org/api/gmail/v1"
 
+	"fmt"
+
 	"github.com/go-mangos/mangos/protocol/rep"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/calendar"
@@ -55,7 +57,9 @@ func main() {
 		var usr userSettings
 		msg, err = sock.Recv()
 		json.Unmarshal(msg, &usr)
+		fmt.Println("ricevuto:", string(msg))
 		client, ok := clientList[usr.UserID]
+		//se non esiste la cartella per il client la creo
 		if !ok {
 			client, err = gauth.New(usr.UserID, "client_secret.json",
 				gmail.MailGoogleComScope, gcal.CalendarReadonlyScope)
@@ -76,11 +80,14 @@ func main() {
 		}
 
 		user.Temperature, user.Weather = weather.GetWeather(usr.Location)
-
-	}
-	js, _ := json.Marshal(user)
-	if err = sock.Send(js); err != nil {
-		panic(err)
+		fmt.Println(user)
+		js, err := json.Marshal(user)
+		if err != nil {
+			panic(err)
+		}
+		if err = sock.Send(js); err != nil {
+			panic(err)
+		}
 	}
 
 }
