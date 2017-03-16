@@ -13,33 +13,18 @@ import (
 	"github.com/go-mangos/mangos/protocol/rep"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/calendar"
+	"github.com/rcarletti/miriam/data"
 	"github.com/rcarletti/miriam/gauth"
 	"github.com/rcarletti/miriam/mail"
 	"github.com/rcarletti/miriam/weather"
 )
-
-type UserInfo struct {
-	Weather     string           `json:"weather"`
-	Temperature float64          `json:"temperature"`
-	Unread      int64            `json:"unread"`
-	EmailList   []mail.Email     `json:"email_list"`
-	Events      []calendar.Event `json:"events"`
-	UserID      string           `json:"user_id"`
-}
-
-type userSettings struct {
-	UserID    string `json:"user_ID"`
-	EmailMax  int    `json:"email_max"`
-	EventsMax int    `json:"evets_max"`
-	Location  string `json:"location"`
-}
 
 func init() {
 	os.Setenv("OWM_API_KEY", "5bf842837d6a00751104eb08c3ace476")
 }
 
 func main() {
-	var user UserInfo
+	var user data.UserInfo
 	var msg []byte
 	clientList := make(map[string]*http.Client)
 
@@ -49,12 +34,12 @@ func main() {
 	}
 	sock.AddTransport(tcp.NewTransport())
 
-	if err = sock.Listen(os.Args[1]); err != nil {
+	if err = sock.Listen("tcp://localhost:" + os.Args[1]); err != nil {
 		panic(err)
 	}
 
 	for {
-		var usr userSettings
+		var usr data.UserSettings
 		msg, err = sock.Recv()
 		json.Unmarshal(msg, &usr)
 		fmt.Println("ricevuto:", string(msg))
@@ -68,6 +53,8 @@ func main() {
 			}
 			clientList[usr.UserID] = client
 		}
+
+		fmt.Println(usr)
 
 		user.EmailList, err = mail.Get(client, int64(usr.EmailMax))
 		if err != nil {

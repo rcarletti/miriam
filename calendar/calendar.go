@@ -13,11 +13,6 @@ type Event struct {
 	Time string `json:"time"`
 }
 
-func setMidnight(t time.Time) time.Time {
-	year, month, day := t.Date()
-	return time.Date(year, month, day, 23, 59, 0, 0, t.Location())
-}
-
 func Get(client *http.Client, max int64) ([]Event, error) {
 	var eventList []Event
 	srvCalendar, err := calendar.New(client)

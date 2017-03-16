@@ -3,39 +3,21 @@ package main
 import (
 	"os"
 
-	calendar "google.golang.org/api/calendar/v3"
-
 	"encoding/json"
 
 	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rcarletti/miriam/data"
 
 	"github.com/go-mangos/mangos/protocol/req"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/jinzhu/gorm"
-	"github.com/rcarletti/miriam/mail"
 )
-
-type UserSettings struct {
-	UserID    string `json:"user_ID"`
-	EmailMax  int    `json:"email_max"`
-	EventsMax int    `json:"evets_max"`
-	Location  string `json:"location"`
-}
-
-type UserInfo struct {
-	Weather     string           `json:"weather"`
-	Temperature float64          `json:"temperature"`
-	Unread      int64            `json:"unread"`
-	EmailList   []mail.Email     `json:"email_list"`
-	Events      []calendar.Event `json:"events"`
-	UserID      string           `json:"user_id"`
-}
 
 type userDB struct {
 	gorm.Model
-	UserSettings
+	data.UserSettings
 	MACAddress string `gorm:"primary_key"`
 }
 
@@ -53,7 +35,7 @@ func main() {
 
 	db.Create(&userDB{
 		MACAddress: "aaa",
-		UserSettings: UserSettings{
+		UserSettings: data.UserSettings{
 			EmailMax:  2,
 			EventsMax: 2,
 			Location:  "pisa",
@@ -83,7 +65,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	var usrInfo UserInfo
+	var usrInfo data.UserInfo
 	json.Unmarshal(msg, &usrInfo)
 	fmt.Println("ricevuto: ", usrInfo)
 
