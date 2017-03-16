@@ -1,20 +1,22 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
 	"os"
 
 	gcal "google.golang.org/api/calendar/v3"
 	gmail "google.golang.org/api/gmail/v1"
 
+	"github.com/go-mangos/mangos/protocol/rep"
+	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/calendar"
 	"github.com/rcarletti/miriam/gauth"
 	"github.com/rcarletti/miriam/mail"
 	"github.com/rcarletti/miriam/weather"
-
-	"encoding/json"
 )
 
-type clientInfo struct {
+type UserInfo struct {
 	Weather     string           `json:"weather"`
 	Temperature float64          `json:"temperature"`
 	Unread      int64            `json:"unread"`
@@ -23,33 +25,62 @@ type clientInfo struct {
 	UserID      string           `json:"user_id"`
 }
 
+type userSettings struct {
+	UserID    string `json:"user_ID"`
+	EmailMax  int    `json:"email_max"`
+	EventsMax int    `json:"evets_max"`
+	Location  string `json:"location"`
+}
+
 func init() {
 	os.Setenv("OWM_API_KEY", "5bf842837d6a00751104eb08c3ace476")
 }
 
 func main() {
-	var c clientInfo
+	var user UserInfo
+	var msg []byte
+	clientList := make(map[string]*http.Client)
 
-	client, err := gauth.New(os.Args[1], "client_secret.json",
-		gmail.MailGoogleComScope, gcal.CalendarReadonlyScope)
+	sock, err := rep.NewSocket()
 	if err != nil {
 		panic(err)
 	}
+	sock.AddTransport(tcp.NewTransport())
 
-	c.EmailList, err = mail.Get(client)
-	if err != nil {
+	if err = sock.Listen(os.Args[1]); err != nil {
 		panic(err)
 	}
 
-	c.Events, err = calendar.Get(client)
-	if err != nil {
+	for {
+		var usr userSettings
+		msg, err = sock.Recv()
+		json.Unmarshal(msg, &usr)
+		client, ok := clientList[usr.UserID]
+		if !ok {
+			client, err = gauth.New(usr.UserID, "client_secret.json",
+				gmail.MailGoogleComScope, gcal.CalendarReadonlyScope)
+			if err != nil {
+				panic(err)
+			}
+			clientList[usr.UserID] = client
+		}
+
+		user.EmailList, err = mail.Get(client, int64(usr.EmailMax))
+		if err != nil {
+			panic(err)
+		}
+
+		user.Events, err = calendar.Get(client, int64(usr.EventsMax))
+		if err != nil {
+			panic(err)
+		}
+
+		user.Temperature, user.Weather = weather.GetWeather(usr.Location)
+
+	}
+	js, _ := json.Marshal(user)
+	if err = sock.Send(js); err != nil {
 		panic(err)
 	}
-
-	c.Temperature, c.Weather = weather.GetWeather("pisa")
-
-	fout, err := os.OpenFile("output.json", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	json.NewEncoder(fout).Encode(c)
-	fout.Close()
 
 }
