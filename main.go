@@ -80,7 +80,6 @@ func main() {
 		}
 
 		user.Temperature, user.Weather = weather.GetWeather(usr.Location)
-		fmt.Println(user)
 		js, err := json.Marshal(user)
 		if err != nil {
 			panic(err)
@@ -88,6 +87,7 @@ func main() {
 		if err = sock.Send(js); err != nil {
 			panic(err)
 		}
+		fmt.Println("inviato: ", user)
 	}
 
 }

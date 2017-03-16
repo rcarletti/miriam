@@ -48,4 +48,6 @@ Temporary Items
 
 # Build artifacts
 miriam.exe
+miriam
+manager
 client_secret.json
