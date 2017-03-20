@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rcarletti/miriam/data"
 
+	"github.com/go-mangos/mangos/protocol/push"
 	"github.com/go-mangos/mangos/protocol/req"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/jinzhu/gorm"
@@ -46,7 +47,9 @@ func main() {
 	var info userDB
 	db.First(&info, "user_id = ?", "miriam")
 
-	sockNetwork, err := req.NewSocket() //socket per la parte network
+	//NETWORK
+
+	sockNetwork, err := req.NewSocket()
 	if err != nil {
 		panic(err)
 	}
@@ -54,19 +57,41 @@ func main() {
 	if err = sockNetwork.Dial("tcp://localhost:" + os.Args[1]); err != nil {
 		panic(err)
 	}
+	defer sockNetwork.Close()
+
+	//encode user settings
 
 	js, _ := json.Marshal(info.UserSettings)
+
+	//send user settings to network
 
 	if err = sockNetwork.Send(js); err != nil {
 		panic(err)
 	}
 	fmt.Println("inviato: ", string(js))
+
+	//receive user info from network
 	msg, err := sockNetwork.Recv()
 	if err != nil {
 		panic(err)
 	}
-	var usrInfo data.UserInfo
-	json.Unmarshal(msg, &usrInfo)
-	fmt.Println("ricevuto: ", usrInfo)
+
+	//GUI
+
+	sockGUI, err := push.NewSocket()
+	if err != nil {
+		panic(err)
+	}
+	defer sockGUI.Close()
+	sockGUI.AddTransport(tcp.NewTransport())
+	if err = sockGUI.Dial("tcp://localhost:" + os.Args[2]); err != nil {
+		panic(err)
+	}
+
+	//send user info to gui
+
+	if err = sockGUI.Send(msg); err != nil {
+		panic(err)
+	}
 
 }

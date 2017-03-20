@@ -13,24 +13,24 @@ type Email struct {
 	Subject string `json:"subject"`
 }
 
-func Get(client *http.Client, max int64) ([]Email, error) {
+func Get(client *http.Client, max int64) ([]Email, int64, error) {
 	var mailList []Email
 
 	srvGmail, err := gmail.New(client)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	r, err := srvGmail.Users.Messages.List("me").Q("is:unread").MaxResults(max).Do()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	toBeRead := r.ResultSizeEstimate //unread emails
 
 	for i := 0; i < int(toBeRead); i++ {
 		m, err := srvGmail.Users.Messages.Get("me", r.Messages[i].Id).Do()
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		var mail Email
@@ -48,5 +48,5 @@ func Get(client *http.Client, max int64) ([]Email, error) {
 		mailList = append(mailList, mail)
 	}
 
-	return mailList, nil
+	return mailList, toBeRead, nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sync"
 
 	gcal "google.golang.org/api/calendar/v3"
 	gmail "google.golang.org/api/gmail/v1"
@@ -32,6 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer sock.Close()
 	sock.AddTransport(tcp.NewTransport())
 
 	if err = sock.Listen("tcp://localhost:" + os.Args[1]); err != nil {
@@ -40,11 +42,16 @@ func main() {
 
 	for {
 		var usr data.UserSettings
+		var waitG sync.WaitGroup
+		waitG.Add(3)
+
+		//receive request from manager
+
 		msg, err = sock.Recv()
 		json.Unmarshal(msg, &usr)
 		fmt.Println("ricevuto:", string(msg))
 		client, ok := clientList[usr.UserID]
-		//se non esiste la cartella per il client la creo
+
 		if !ok {
 			client, err = gauth.New(usr.UserID, "client_secret.json",
 				gmail.MailGoogleComScope, gcal.CalendarReadonlyScope)
@@ -54,23 +61,32 @@ func main() {
 			clientList[usr.UserID] = client
 		}
 
-		fmt.Println(usr)
+		//retrieve user info
 
-		user.EmailList, err = mail.Get(client, int64(usr.EmailMax))
-		if err != nil {
-			panic(err)
-		}
+		go func() {
+			user.EmailList, user.Unread, err = mail.Get(client, int64(usr.EmailMax))
+			waitG.Done()
+		}()
 
-		user.Events, err = calendar.Get(client, int64(usr.EventsMax))
-		if err != nil {
-			panic(err)
-		}
+		go func() {
+			user.Events, err = calendar.Get(client, int64(usr.EventsMax))
+			waitG.Done()
+		}()
 
-		user.Temperature, user.Weather = weather.GetWeather(usr.Location)
+		go func() {
+			user.Temperature, user.Weather = weather.GetWeather(usr.Location)
+			waitG.Done()
+		}()
+
+		waitG.Wait()
+
+		//encode user info
 		js, err := json.Marshal(user)
 		if err != nil {
 			panic(err)
 		}
+
+		//send user info to manager
 		if err = sock.Send(js); err != nil {
 			panic(err)
 		}
