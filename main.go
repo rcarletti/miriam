@@ -77,9 +77,6 @@ func main() {
 		}()
 
 		waitG.Wait()
-
-		user.Command = "d"
-
 		//encode userinfo
 		js, err := json.Marshal(user)
 		if err != nil {
