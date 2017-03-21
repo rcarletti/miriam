@@ -9,8 +9,6 @@ import (
 	gcal "google.golang.org/api/calendar/v3"
 	gmail "google.golang.org/api/gmail/v1"
 
-	"fmt"
-
 	"github.com/go-mangos/mangos/protocol/rep"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/calendar"
@@ -36,7 +34,7 @@ func main() {
 	defer sock.Close()
 	sock.AddTransport(tcp.NewTransport())
 
-	if err = sock.Listen("tcp://localhost:" + os.Args[1]); err != nil {
+	if err = sock.Listen("tcp://localhost:50000"); err != nil {
 		panic(err)
 	}
 
@@ -49,7 +47,7 @@ func main() {
 
 		msg, err = sock.Recv()
 		json.Unmarshal(msg, &usr)
-		fmt.Println("ricevuto:", string(msg))
+		//fmt.Println("ricevuto:", string(msg))
 		client, ok := clientList[usr.UserID]
 
 		if !ok {
@@ -61,7 +59,7 @@ func main() {
 			clientList[usr.UserID] = client
 		}
 
-		//retrieve user info
+		//retrieve userinfo
 
 		go func() {
 			user.EmailList, user.Unread, err = mail.Get(client, int64(usr.EmailMax))
@@ -80,17 +78,19 @@ func main() {
 
 		waitG.Wait()
 
-		//encode user info
+		user.Command = "d"
+
+		//encode userinfo
 		js, err := json.Marshal(user)
 		if err != nil {
 			panic(err)
 		}
 
-		//send user info to manager
+		//send userinfo to manager
 		if err = sock.Send(js); err != nil {
 			panic(err)
 		}
-		fmt.Println("inviato: ", user)
+		//fmt.Println("inviato: ", user)
 	}
 
 }

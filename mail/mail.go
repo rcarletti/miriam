@@ -25,9 +25,18 @@ func Get(client *http.Client, max int64) ([]Email, int64, error) {
 	if err != nil {
 		return nil, 0, err
 	}
+
 	toBeRead := r.ResultSizeEstimate //unread emails
 
-	for i := 0; i < int(toBeRead); i++ {
+	var maxMail int64
+
+	if toBeRead < max {
+		maxMail = toBeRead
+	} else {
+		maxMail = max
+	}
+
+	for i := 0; i < int(maxMail); i++ {
 		m, err := srvGmail.Users.Messages.Get("me", r.Messages[i].Id).Do()
 		if err != nil {
 			return nil, 0, err

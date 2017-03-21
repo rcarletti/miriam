@@ -12,6 +12,7 @@ type UserInfo struct {
 	EmailList   []mail.Email     `json:"email_list"`
 	Events      []calendar.Event `json:"events"`
 	UserID      string           `json:"user_id"`
+	Command     string           `json:"command"`
 }
 
 type UserSettings struct {
@@ -19,4 +20,15 @@ type UserSettings struct {
 	EmailMax  int    `json:"email_max"`
 	EventsMax int    `json:"events_max"`
 	Location  string `json:"location"`
+}
+
+type NearUsers struct {
+	BUsersList []BluetoothUser `json:"BuserList"`
+	userTOT    int             `json:"userTOT"`
+}
+
+type BluetoothUser struct {
+	MacAddress string `json:"mac_address"`
+	Distance   int    `json:"distance"`
+	Timestamp  string `json:"time_stamp"`
 }

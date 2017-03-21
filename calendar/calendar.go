@@ -1,7 +1,6 @@
 package calendar
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -45,8 +44,6 @@ func Get(client *http.Client, max int64) ([]Event, error) {
 			})
 
 		}
-	} else {
-		fmt.Printf("No upcoming events found.\n")
 	}
 	return eventList, nil
 }
