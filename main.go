@@ -77,6 +77,7 @@ func main() {
 		}()
 
 		waitG.Wait()
+		user.UserID = usr.UserID
 		//encode userinfo
 		js, err := json.Marshal(user)
 		if err != nil {

@@ -8,7 +8,7 @@ go build ./cmd/provaBluetooth
 go build ./cmd/provagui
 
 ./miriam &         pids+=($!)
-./provagui &       pids+=($!)
+
 ./manager &        pids+=($!)
 ./provaBluetooth & pids+=($!)
 
