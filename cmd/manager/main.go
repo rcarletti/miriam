@@ -17,7 +17,7 @@ var db *gorm.DB
 var log = logrus.WithField("app", "manager")
 
 func init() {
-	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 }
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 	// 		EmailMax:  2,
 	// 		EventsMax: 2,
 	// 		Location:  "pisa",
-	// 		UserID:    "miriam",
+	// 		UserID:    "miricd ..am",
 	// 	},
 	// })
 

@@ -61,6 +61,7 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 		if len(users.BUsersList) == 0 || users.BUsersList[0].Distance > maxDistance {
 			if userInRange {
 				userInRange = false
+				userData = data.BluetoothUser{}
 				updates <- data.UserSettings{}
 			}
 		} else {
