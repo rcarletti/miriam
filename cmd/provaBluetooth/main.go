@@ -17,18 +17,15 @@ func main() {
 	usr1 := data.BluetoothUser{"aaa", 2, "13:04"}
 	usr2 := data.BluetoothUser{"bbb", 4, "13:04"}
 
-
 	var usrList data.NearUsers
-	var usrList2 data.NearUsers
+	//var usrList2 data.NearUsers
 	usrList.BUsersList = append(usrList.BUsersList, usr1)
 	usrList.BUsersList = append(usrList.BUsersList, usr2)
-
-
 
 	encodedUserList, err := json.Marshal(usrList)
 	if err != nil {
 		panic(err)
-
+	}
 
 	sock, err := push.NewSocket()
 	defer sock.Close()

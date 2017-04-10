@@ -58,5 +58,5 @@ func main() {
 	go handleBluetoothUpdates(updates)
 	go handleUserData(updates)
 
-	select {}
+	select {} //keep the main process running
 }

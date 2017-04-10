@@ -40,7 +40,7 @@ func main() {
 
 	for {
 		var usr data.UserSettings
-		var waitG sync.WaitGroup
+		var waitG sync.WaitGroup //barrier
 		waitG.Add(3)
 
 		//receive request from manager
@@ -50,7 +50,7 @@ func main() {
 		//fmt.Println("ricevuto:", string(msg))
 		client, ok := clientList[usr.UserID]
 
-		if !ok {
+		if !ok { //user not found
 			client, err = gauth.New(usr.UserID, "client_secret.json",
 				gmail.MailGoogleComScope, gcal.CalendarReadonlyScope)
 			if err != nil {

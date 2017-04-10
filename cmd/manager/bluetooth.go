@@ -10,7 +10,7 @@ import (
 	"github.com/rcarletti/miriam/data"
 )
 
-const maxDistance = 3 // meters
+const maxDistance = 3 // meters(?)
 
 func retrieveUserSettings(key string) data.UserSettings {
 	var info UserEntry
@@ -38,37 +38,37 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 	var userData data.BluetoothUser
 
 	for {
-		//ricevo un nuovo messaggio dal bluetooth
+		//receive from presence module
 		msg, err := sock.Recv()
 		if err != nil {
 			log.Errorf("Could not receive from socket: %v", err)
 			continue
 		}
 
-		var users data.NearUsers //lista utenti nelle vicinanze
+		var users data.NearUsers
 
 		if err = json.Unmarshal(msg, &users); err != nil {
 			log.Errorf("Invalid msg received: %v", err)
 			continue
 		}
-
+		//sort users list by distance
 		sort.Slice(users.BUsersList, func(i, j int) bool {
 			return users.BUsersList[i].Distance < users.BUsersList[j].Distance
 		})
 
 		log.Debugln("Received:", users)
 
-		if len(users.BUsersList) == 0 || users.BUsersList[0].Distance > maxDistance {
-			if userInRange {
+		if len(users.BUsersList) == 0 || users.BUsersList[0].Distance > maxDistance { //no one nearby
+			if userInRange { //someone went away!
 				userInRange = false
 				userData = data.BluetoothUser{}
 				updates <- data.UserSettings{}
 			}
-		} else {
+		} else { //someone is near
 			userInRange = true
-			if users.BUsersList[0] != userData {
+			if users.BUsersList[0] != userData { //if someone new has come
 				userData = users.BUsersList[0]
-				updates <- retrieveUserSettings(userData.MacAddress)
+				updates <- retrieveUserSettings(userData.MacAddress) //send stuff to network goroutine
 			}
 		}
 	}
