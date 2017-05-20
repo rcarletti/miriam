@@ -5,26 +5,32 @@ import (
 
 	"time"
 
-	"fmt"
-
 	"github.com/go-mangos/mangos/protocol/push"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/data"
 )
 
 func main() {
-
-	usr1 := data.BluetoothUser{"aaa", 2, "13:04"}
-	usr2 := data.BluetoothUser{"bbb", 4, "13:04"}
-
-	var usrList data.NearUsers
-	//var usrList2 data.NearUsers
-	usrList.BUsersList = append(usrList.BUsersList, usr1)
-	usrList.BUsersList = append(usrList.BUsersList, usr2)
-
-	encodedUserList, err := json.Marshal(usrList)
-	if err != nil {
-		panic(err)
+	testVectors := []data.NearUsers{
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 300, "13:04"},
+				data.BluetoothUser{"bbb", 300, "13:04"},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 100, "13:04"},
+				data.BluetoothUser{"bbb", 300, "13:04"},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 100, "13:04"},
+				data.BluetoothUser{"bbb", 100, "13:04"},
+			},
+		},
+		{},
 	}
 
 	sock, err := push.NewSocket()
@@ -34,18 +40,11 @@ func main() {
 		panic(err)
 	}
 
-	for i := 0; i < 5; i++ {
-		if err = sock.Send(encodedUserList); err != nil {
+	for _, v := range testVectors {
+		msg, _ := json.Marshal(v)
+		if err = sock.Send(msg); err != nil {
 			panic(err)
 		}
 		time.Sleep(5 * time.Second)
-	}
-
-	msg, _ := json.Marshal(data.NearUsers{})
-	sock.Send(msg)
-	time.Sleep((20 * time.Second))
-	fmt.Println("sending")
-	if err = sock.Send(encodedUserList); err != nil {
-		panic(err)
 	}
 }

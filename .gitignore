@@ -47,6 +47,9 @@ Temporary Items
 .apdisk
 
 # Build artifacts
-miriam.exe
-miriam
-client_secret.json
+/miriam.exe
+/miriam
+/manager
+/provaBluetooth
+/provaGUI
+/client_secret.json

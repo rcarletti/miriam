@@ -10,7 +10,7 @@ import (
 	"github.com/rcarletti/miriam/data"
 )
 
-const maxDistance = 3 // meters(?)
+const maxDistance = 200 // cm(?)
 
 func retrieveUserSettings(key string) data.UserSettings {
 	var info UserEntry
@@ -66,7 +66,19 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 			}
 		} else { //someone is near
 			userInRange = true
-			if users.BUsersList[0] != userData { //if someone new has come
+			keepOldUser := false
+
+			// current user has priority, so check if he is still there
+			for _, u := range users.BUsersList {
+				if u.MacAddress == userData.MacAddress && u.Distance <= maxDistance {
+					userData = u
+					keepOldUser = true
+					break
+				}
+			}
+
+			// if the old user is gone, replace him with the closest one
+			if !keepOldUser {
 				userData = users.BUsersList[0]
 				updates <- retrieveUserSettings(userData.MacAddress) //send stuff to network goroutine
 			}
