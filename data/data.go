@@ -29,6 +29,6 @@ type NearUsers struct {
 
 type BluetoothUser struct {
 	MacAddress string  `json:"mac_address"`
-	Distance   float32 `json:"distance"`
-	Timestamp  string  `json:"time_stamp"`
+	Distance   uint    `json:"distance"`    // distance in cm
+	Timestamp  uint    `json:"time_stamp"`  // timestamp as seconds
 }
