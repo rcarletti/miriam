@@ -14,20 +14,20 @@ func main() {
 	testVectors := []data.NearUsers{
 		{
 			BUsersList: []data.BluetoothUser{
-				data.BluetoothUser{"aaa", 300, "13:04"},
-				data.BluetoothUser{"bbb", 300, "13:04"},
+				data.BluetoothUser{"aaa", 300, 13},
+				data.BluetoothUser{"bbb", 300, 13},
 			},
 		},
 		{
 			BUsersList: []data.BluetoothUser{
-				data.BluetoothUser{"aaa", 100, "13:04"},
-				data.BluetoothUser{"bbb", 300, "13:04"},
+				data.BluetoothUser{"aaa", 100, 13},
+				data.BluetoothUser{"bbb", 300, 13},
 			},
 		},
 		{
 			BUsersList: []data.BluetoothUser{
-				data.BluetoothUser{"aaa", 100, "13:04"},
-				data.BluetoothUser{"bbb", 100, "13:04"},
+				data.BluetoothUser{"aac", 100, 13},
+				data.BluetoothUser{"bbb", 100, 13},
 			},
 		},
 		{},

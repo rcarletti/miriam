@@ -12,11 +12,11 @@ import (
 
 const maxDistance = 200 // cm(?)
 
-func retrieveUserSettings(key string) data.UserSettings {
+func retrieveUserSettings(key string) (data.UserSettings, bool) {
 	var info UserEntry
 	log.Debugln("Search by key:", key)
-	db.First(&info, "mac_address = ?", key)
-	return info.UserSettings
+	v := db.First(&info, "mac_address = ?", key)
+	return info.UserSettings, v.RowsAffected == 0
 }
 
 func handleBluetoothUpdates(updates chan data.UserSettings) {
@@ -79,8 +79,16 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 
 			// if the old user is gone, replace him with the closest one
 			if !keepOldUser {
-				userData = users.BUsersList[0]
-				updates <- retrieveUserSettings(userData.MacAddress) //send stuff to network goroutine
+				e := true
+				var v data.UserSettings
+
+				for i := 0; i < len(users.BUsersList) && e; i++ {
+					userData = users.BUsersList[i]
+					v, e = retrieveUserSettings(userData.MacAddress)
+					if !e {
+						updates <- v
+					}
+				}
 			}
 		}
 	}
