@@ -5,6 +5,8 @@ import (
 
 	"time"
 
+	"fmt"
+
 	"github.com/go-mangos/mangos/protocol/push"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/data"
@@ -26,11 +28,57 @@ func main() {
 		},
 		{
 			BUsersList: []data.BluetoothUser{
-				data.BluetoothUser{"aac", 100, 13},
+				data.BluetoothUser{"aaa", 300, 13},
+				data.BluetoothUser{"bbc", 100, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 300, 13},
+				data.BluetoothUser{"bbb", 300, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 100, 13},
+				data.BluetoothUser{"bbb", 300, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 300, 13},
 				data.BluetoothUser{"bbb", 100, 13},
 			},
 		},
+
 		{},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"bcb", 100, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 100, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 100, 13},
+				data.BluetoothUser{"bcb", 100, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"aaa", 300, 13},
+				data.BluetoothUser{"bcb", 100, 13},
+			},
+		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"bcb", 100, 13},
+			},
+		},
 	}
 
 	sock, err := push.NewSocket()
@@ -45,6 +93,7 @@ func main() {
 		if err = sock.Send(msg); err != nil {
 			panic(err)
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(10 * time.Second)
+		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 	}
 }

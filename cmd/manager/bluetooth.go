@@ -86,9 +86,12 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 					userData = users.BUsersList[i]
 					v, e = retrieveUserSettings(userData.MacAddress)
 					if !e {
-						updates <- v
+						if users.BUsersList[i].Distance < maxDistance {
+							updates <- v
+						} else {
+							updates <- data.UserSettings{}
+						}
 					}
-
 				}
 				if e {
 					updates <- data.UserSettings{}
