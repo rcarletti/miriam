@@ -88,6 +88,10 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 					if !e {
 						updates <- v
 					}
+
+				}
+				if e {
+					updates <- data.UserSettings{}
 				}
 			}
 		}
