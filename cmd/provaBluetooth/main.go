@@ -79,6 +79,12 @@ func main() {
 				data.BluetoothUser{"bcb", 100, 13},
 			},
 		},
+		{
+			BUsersList: []data.BluetoothUser{
+				data.BluetoothUser{"bcb", 100, 13},
+				data.BluetoothUser{"aaa", 100, 13},
+			},
+		},
 	}
 
 	sock, err := push.NewSocket()

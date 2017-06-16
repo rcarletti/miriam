@@ -5,6 +5,8 @@ import (
 
 	"sort"
 
+	"fmt"
+
 	"github.com/go-mangos/mangos/protocol/pull"
 	"github.com/go-mangos/mangos/transport/tcp"
 	"github.com/rcarletti/miriam/data"
@@ -73,6 +75,7 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 				if u.MacAddress == userData.MacAddress && u.Distance <= maxDistance {
 					userData = u
 					keepOldUser = true
+					fmt.Println("current user priority")
 					break
 				}
 			}
@@ -81,7 +84,7 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 			if !keepOldUser {
 				e := true
 				var v data.UserSettings
-
+				fmt.Println("new user")
 				for i := 0; i < len(users.BUsersList) && e; i++ {
 					userData = users.BUsersList[i]
 					v, e = retrieveUserSettings(userData.MacAddress)
@@ -90,11 +93,15 @@ func handleBluetoothUpdates(updates chan data.UserSettings) {
 							updates <- v
 						} else {
 							updates <- data.UserSettings{}
+							userData = data.BluetoothUser{}
+							keepOldUser = false
 						}
 					}
 				}
 				if e {
 					updates <- data.UserSettings{}
+					userData = data.BluetoothUser{}
+					keepOldUser = false
 				}
 			}
 		}
